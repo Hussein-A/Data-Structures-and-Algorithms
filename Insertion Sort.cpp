@@ -4,6 +4,7 @@
 
 using std::cout;
 
+//Note for a singly linked list implementation please see the leetcode/solvedproblems repository. Specifically problem 147.
 template <typename T>
 void isort(std::vector<T>& v) {
 	//requires Less_comparable<L,T>()
