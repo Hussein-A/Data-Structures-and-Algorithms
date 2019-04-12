@@ -10,10 +10,10 @@ int BS_sqrt(int n) {
 		else if (mid < n/mid){low = mid + 1;}
 		else { high = mid - 1; }
 	}
-	if (low*low > n) {
+	if (low > n/low) {
 		return low - 1;
 	}
-	else if ((low + 1)*(low + 1) <= n) {
+	else if ((low + 1) <= n(low + 1)) {
 		return low + 1;
 	}
 	else return low;
