@@ -18,6 +18,20 @@ struct graph {
 
 	void read_graph();
 	void read_file(const std::string& name);
-	void insert_edge(int x, int y, bool directed, int weight = 1);
+	void insert_edge(int x, int y, int weight = 1);
 	void print_graph();
+	void rand_graph(int nvertices, int nedges, int max_weight, bool directed);
+	void save_graph(const std::string& name);
 };
+
+// Adjacency matrix representation of graphs
+struct adjmatrix {
+	std::vector<std::vector<int>> edges;
+	int nvertices;
+
+	adjmatrix(int n);
+	void print_matrix();
+};
+
+//helper function
+adjmatrix list_to_matrix(graph& g);
