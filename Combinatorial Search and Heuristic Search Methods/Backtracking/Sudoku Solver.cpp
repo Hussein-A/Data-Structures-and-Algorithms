@@ -1,13 +1,19 @@
 /*
+V2 (next_square changed)
 This program's goal is to solve a given Sudoku puzzle (9x9). It is based on the backtracking implementation
 used for finding allsubsets/permutations found in this repo. as well as in Skiena Algorithm Design Manual, 2ed. pg. 242
-Two example sudoku puzzles are given at the end 1 of hard difficulty and the other easy. Please note the former
-takes some time with this implementation.
+Two example sudoku puzzles are given at the end 1 of hard difficulty and the other easy. 
+
+Do note that this version is much faster than the previous. It completes the hard puzzle in just 11 seconds while
+the previous solved it in 402 seconds.
 */
 
 #include<vector>
 #include<iostream>
+#include<algorithm> //for std::count
+#include<chrono>
 using namespace std;
+using namespace chrono;
 
 #define DIMENSION 9 //9x9 sudoku puzzle
 #define NCELLS DIMENSION*DIMENSION //how many possible squares
@@ -53,15 +59,7 @@ void process_solution(const board& puzzle){
 	}
 }
 
-point next_square(board& puzzle) {
-	//simply picks the next open square in order from left to right, top to bottom first
-	for (int row = 0; row < DIMENSION; ++row) {
-		for (int clmn = 0; clmn < DIMENSION; ++clmn) {
-			if (puzzle.config[row][clmn] == 0) return point{ row, clmn };
-		}
-	}
-	return point{ -1, -1 }; //no open positions found
-}
+
 
 point get_sector(const point& square) {
 	/*returns the upper left point of the sector that the given square rests in
@@ -103,6 +101,28 @@ void possible_nums(const board& puzzle, const point& square, vector<bool>& is_in
 		}
 	}
 
+}
+
+point next_square(board& puzzle) {
+	//finds the most constrained open square (in the sense of how many candidates available at that square)
+
+	point square{ -1, -1 };
+	point temp;
+	int min{ INT_MAX };
+	for (int row = 0; row < DIMENSION; ++row) {
+		for (int clmn = 0; clmn < DIMENSION; ++clmn) {
+			if (puzzle.config[row][clmn] == 0) {
+				vector<bool> is_in(DIMENSION, false);
+				temp.x = row; temp.y = clmn;
+				possible_nums(puzzle, temp, is_in);
+				int ncandidates = count(is_in.begin(), is_in.end(), false);
+				if (ncandidates < min) {
+					square = temp; min = ncandidates;
+				}
+			}
+		}
+	}
+	return square;
 }
 
 vector<int> construct_candidates(board& puzzle, int count) {
@@ -160,7 +180,11 @@ int main() {
 		{0,0,0,1,2,0,0,0,0}, {0,8,0,0,0,0,0,4,0}, {0,5,0,0,0,0,6,0,0}
 	};
 	puzzle.freespace = NCELLS - 17;
+	auto start = high_resolution_clock::now();
 	solve_sudoku(puzzle);
+	auto stop = high_resolution_clock::now();
+	auto duration = duration_cast<seconds>(stop - start);
+	cout << "Time taken: " << duration.count() << " seconds.\n";
 }
 
 /*
@@ -169,4 +193,26 @@ int main() {
 		{5,0,4,8,0,0,7,2,0}, {8,0,6,2,0,5,0,9,0}, {9,0,1,0,3,0,0,0,6},
 		{0,0,0,0,0,0,0,0,5}, {7,0,0,1,0,0,0,3,8}, {1,0,8,3,5,0,2,0,4},
 		{2,0,3,0,8,6,0,4,7}, {0,0,0,0,2,0,0,0,0}, {0,0,9,5,7,0,0,1,0} //freespace = NCELLS - 36
+*/
+
+
+/*
+point square{ -1, -1 };
+	point temp;
+	int min{ INT_MAX };
+	for (int row = 0; row < DIMENSION; ++row) {
+		for (int clmn = 0; clmn < DIMENSION; ++clmn) {
+			if (puzzle.config[row][clmn] == 0) {
+				vector<bool> is_in(DIMENSION, false);
+				temp.x = row; temp.y = clmn;
+				possible_nums(puzzle, temp, is_in);
+				int ncandidates = count(is_in.begin(), is_in.end(), false);
+				if (ncandidates < min) {
+					square = temp; min = ncandidates;
+				}
+			}
+		}
+	}
+	return square;
+
 */
