@@ -2,6 +2,7 @@
 #include<iostream>
 #include<fstream>
 #include<sstream>
+#include<algorithm>
 #include<time.h>
 #include"graph.h"
 
@@ -62,8 +63,9 @@ void graph::read_graph() {
 void graph::insert_edge(int x, int y, int weight) {
 	if (x >= this->nvertices || y >= this->nvertices) error("Error! One of the vertices entered is out of bounds!\n");
 	
-	this->edges[x].push_back(edgenode{ y, weight }); ++degree[x];
-	if (!this->directed) {this->edges[y].push_back(edgenode{ x, weight }); ++degree[y];}
+	++this->nedges;
+	this->edges[x].push_back(edgenode{ y, weight }); ++this->degree[x];
+	if (!this->directed) {this->edges[y].push_back(edgenode{ x, weight }); ++this->degree[y];}
 }
 
 void graph::print_graph() {
@@ -84,10 +86,12 @@ void graph::read_file(const string& name) {
 	//weight of neighbor of ith line (ith vertex) 
 	ifstream ist{ name };
 	if (!ist) error("Cannot open file for reading!");
+
 	string temp;
 	ist >> this->nvertices;
 	ist >> temp; this->directed = temp == "true" ? true : false;
 	this->edges.resize(this->nvertices);
+	this->degree.resize(this->nvertices, 0);
 	getline(ist, temp); //remove newline
 
 
@@ -99,7 +103,7 @@ void graph::read_file(const string& name) {
 		j = 0;
 		while (is>>weight) {
 			if (weight == INT_MAX) { ++j; continue; }//ignore max int weights as they represent non edge
-			this->edges[i].push_back(edgenode{ j, weight });
+			this->insert_edge(i, j, weight);
 			++j;
 		}
 		++i;
@@ -115,7 +119,7 @@ void graph::save_graph(const std::string& name) {
 	if (this->directed) ost << "true\n";
 	else ost << "false\n";
 
-	//convert to adjacency list and output line
+	//convert to adjacency matrix and output line
 	adjmatrix gmatrix = list_to_matrix(*this);
 	for (int i = 0; i < gmatrix.nvertices; ++i) {
 		for (int j = 0; j < gmatrix.nvertices; ++j) {
@@ -127,8 +131,8 @@ void graph::save_graph(const std::string& name) {
 }
 
 
-//EXPERIMENTAL
 void graph::rand_graph(int nvertices, int nedges, int max_weight, bool directed) {
+	//constructs a random graph with the adj list representation
 	int max_nedges = nvertices * (nvertices - 1) / 2;
 	if (nedges > max_nedges) error("ERROR! More edges given than possible!\n");
 
@@ -143,7 +147,16 @@ void graph::rand_graph(int nvertices, int nedges, int max_weight, bool directed)
 	while (nedges > 0) {
 		int vertex = rand() % nvertices;
 		int neighbor = rand() % nvertices;
-		while (neighbor == vertex) neighbor = rand() % nvertices; //prevent self edges
+		//Don't pick a full vertex ie. one that already has an edge with every other vertex
+		while (this->edges[vertex].size() == nvertices - 1) vertex = rand() % nvertices;
+		vector<edgenode> vedges = this->edges[vertex];
+		
+		auto it = std::find_if(vedges.begin(), vedges.end(), [&](edgenode& edge) {return edge.neighbor == neighbor; });
+		while (neighbor == vertex || it != vedges.end()) {
+			neighbor = rand() % nvertices; //prevent self edges or overwriting existing edges
+			it = std::find_if(vedges.begin(), vedges.end(), [&](edgenode& edge) {return edge.neighbor == neighbor; });
+		}
+
 		int weight = rand() % max_weight +1;//do not allow 0 weighted edges except for self.
 		this->insert_edge(vertex, neighbor, weight);
 		--nedges;
