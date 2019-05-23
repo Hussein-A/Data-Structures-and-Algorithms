@@ -1,5 +1,5 @@
 /*
-This program's goal is to generate all possible paths on a graph on n vertices. Based upon previous
+This program's goal is to generate all possible paths on a graph on n vertices from a start vertex s to another t. Based upon previous
 implementations of find all subsets/permutations. Uses custom graph data data structure, see graph.cpp,
 graph.h in Graphs subfolder of DSA repo.
 */
