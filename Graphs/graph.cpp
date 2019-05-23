@@ -5,6 +5,7 @@
 #include<algorithm>
 #include<time.h>
 #include"graph.h"
+#include<random>
 
 using namespace std;
 
@@ -87,9 +88,10 @@ void graph::read_file(const string& name) {
 	ifstream ist{ name };
 	if (!ist) error("Cannot open file for reading!");
 
-	string temp;
+	string temp, directed;
 	ist >> this->nvertices;
-	ist >> temp; this->directed = temp == "true" ? true : false;
+	//note that insert_edge will add twice for an edge between (i,j) if not directed. But adj matrix already has two such edges (i,j) and (j,i) hence adding duplicate edges in list
+	ist >> directed; this->directed = true; 
 	this->edges.resize(this->nvertices);
 	this->degree.resize(this->nvertices, 0);
 	getline(ist, temp); //remove newline
@@ -102,13 +104,15 @@ void graph::read_file(const string& name) {
 		istringstream is{ row };
 		j = 0;
 		while (is>>weight) {
-			if (weight == INT_MAX) { ++j; continue; }//ignore max int weights as they represent non edge
+			if (weight == INT_MAX || weight == 0) { ++j; continue; }//ignore max_int/0 weights as they represent non edge
 			this->insert_edge(i, j, weight);
 			++j;
 		}
 		++i;
 	}
-
+	cout << "\n\n";
+	if (directed == "true") this->directed = true;
+	else this->directed = false;
 
 }
 
@@ -143,21 +147,26 @@ void graph::rand_graph(int nvertices, int nedges, int max_weight, bool directed)
 	this->edges.resize(nvertices);
 	this->degree.resize(nvertices);
 
-	srand(time(NULL));
+	//init rand num generater
+	random_device r;
+	mt19937 rng(r());
+	uniform_int_distribution<int> dist(0, nvertices-1);
 	while (nedges > 0) {
-		int vertex = rand() % nvertices;
-		int neighbor = rand() % nvertices;
+		dist = uniform_int_distribution<int>(0, nvertices-1);
+		int vertex = dist(rng);
+		int neighbor = dist(rng);
 		//Don't pick a full vertex ie. one that already has an edge with every other vertex
-		while (this->edges[vertex].size() == nvertices - 1) vertex = rand() % nvertices;
+		while (this->edges[vertex].size() == nvertices - 1) vertex = dist(rng);
 		vector<edgenode> vedges = this->edges[vertex];
 		
 		auto it = std::find_if(vedges.begin(), vedges.end(), [&](edgenode& edge) {return edge.neighbor == neighbor; });
 		while (neighbor == vertex || it != vedges.end()) {
-			neighbor = rand() % nvertices; //prevent self edges or overwriting existing edges
+			neighbor = dist(rng); //prevent self edges or overwriting existing edges
 			it = std::find_if(vedges.begin(), vedges.end(), [&](edgenode& edge) {return edge.neighbor == neighbor; });
 		}
 
-		int weight = rand() % max_weight +1;//do not allow 0 weighted edges except for self.
+		dist = uniform_int_distribution<int>(1, max_weight);
+		int weight = dist(rng);//do not allow 0 weighted edges except for self.
 		this->insert_edge(vertex, neighbor, weight);
 		--nedges;
 	}
