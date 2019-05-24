@@ -80,14 +80,6 @@ void rand_path(vector<int>& path, const graph& g) {
 	}
 }
 
-int transition_cost(const vector<int>& tour, const adjmatrix& g, int s_index, int j_index) {
-	//calculates the cost of swapping the position of the vertices s and j in the tour
-	vector<int> new_tour = tour;
-	swap(new_tour[s_index], new_tour[j_index]);
-
-	return 0;
-}
-
 vector<int> hillclimb_TSP(graph& g) {
 	//note we always start the path with the first vertex, 0 (since the path is a cycle and goes through all vertices anyway)
 	vector<int> tour(g.nvertices, 0); 	
