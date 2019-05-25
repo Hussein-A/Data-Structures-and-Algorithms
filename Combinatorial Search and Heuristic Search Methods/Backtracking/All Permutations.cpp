@@ -1,5 +1,5 @@
 /*
-This program's goal is to generate all possible permutations of an n element set of integers. This code
+This program's goal is to generate all possible permutations of an n (unique) element set of integers. This code
 is based on the implementation found in Skiena's Algorithm Design Manual, 2ed. pg. 234.
 */
 
