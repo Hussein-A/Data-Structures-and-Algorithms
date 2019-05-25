@@ -1,59 +1,56 @@
 /*
-This program's goal is to generate all possible permutations of an n (unique) element set of integers. This code
+This program's goal is to generate all possible permutations of an n (not necessarily unique) element set of integers. This code
 is based on the implementation found in Skiena's Algorithm Design Manual, 2ed. pg. 234.
 */
 
 #include<vector>
 #include<iostream>
-#include<list>
-using namespace std;
+#include<unordered_map>
 
-bool is_solution(vector<int> v, int count) {
-	return v.size() - 1 == count;
+void process_solution(const std::vector<int>& solution) {
+	for (int i = 1; i < solution.size(); ++i) std::cout << solution[i] << " ";
+	std::cout << "\n";
 }
 
-void process_solution(vector<int> v, int input = 0) {//default arg. when not needed
-	cout << '{';
-	for (int i = 1; i < v.size(); ++i) cout << v[i];
-	cout << "}\n";
+bool is_solution(std::vector<int>& solution, int count) {
+	if (count != solution.size()-1) return false;
+	else return true;
 }
 
-vector<int> construct_candidates(vector<int> curr, int count, const vector<bool>& is_in) {
-	vector<int> candidates;
-	for (int i = 1; i < curr.size(); ++i)
-		if (!is_in[i]) candidates.push_back(i);
+std::vector<int> construct_candidates(std::vector<int>& solution, int count, std::unordered_map<int,int>& num_counts) {
+	std::vector<int> candidates;
+
+	for (auto it : num_counts) {if (it.second > 0) candidates.push_back(it.first);}
 	return candidates;
 }
 
-void backtrack(vector<int> curr, int count, vector<bool>& is_in) {
-	if (is_solution(curr, count)) process_solution(curr);
-	else {
-		++count;
-		vector<int> candidates = construct_candidates(curr, count, is_in);
-		//cout << k << "\n";
-		for (int i = 0; i < candidates.size(); ++i) {
-			//make move here
-			curr[count] = candidates[i];
-			is_in[candidates[i]] = true;
-			backtrack(curr, count, is_in);
-			//unmake move here
-			is_in[candidates[i]] = false;
-		}
+void backtrack(std::vector<int>& solution, int count, std::unordered_map<int, int>& num_counts) {
+	if (is_solution(solution, count)) process_solution(solution);
+	++count;
+
+	std::vector<int> candidates = construct_candidates(solution, count, num_counts);
+	for (int i = 0; i < candidates.size(); ++i) {
+		solution[count] = candidates[i]; //make choice
+		--num_counts[candidates[i]]; 
+
+		backtrack(solution, count, num_counts);
+		++num_counts[candidates[i]]; //unmake choice and try next candidate
 	}
+
 }
 
-void generate_subsets(int n) {
-	vector<int> soln(n + 1);
-	vector<bool> is_in(n + 1, false);
-	backtrack(soln, 0, is_in);
+void multiset_perm(std::vector<int> set) {
+	std::vector<int> solution(set.size()+1);
+
+	//keep track of how many copies of particular num we have
+	std::unordered_map<int, int> num_counts;
+	for (int x : set) ++num_counts[x];
+
+	backtrack(solution, 0, num_counts);
 }
 
 int main() {
-	while (true) {
-		cout << "Enter size of subset." << endl;
-		int n; cin >> n;
-		generate_subsets(n);
-		cout << endl;
-	}
+
+	multiset_perm(std::vector<int>{ 1,1,2,2 });
 
 }
